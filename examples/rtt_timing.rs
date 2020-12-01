@@ -63,11 +63,11 @@ fn timed_loop() -> (u32, u32) {
 // A.1) What is the cycle count for the loop?
 // > cargo run --example rtt_timing
 //
-// ANSWER: diff 4830149 
+// ANSWER: diff 5300151 
 //
 // A.2) How many cycles per iteration?
 //
-// ANSWER: 483
+// ANSWER: 530
 //
 // A.3) Why do we need a wrapping subtraction?
 //
@@ -86,7 +86,7 @@ fn timed_loop() -> (u32, u32) {
 //
 // What is the speedup (A/B)?
 //
-// ANSWER: 69x faster 
+// ANSWER: 76x faster 
 //
 // Why do you think it differs that much?
 //
@@ -117,20 +117,30 @@ fn timed_loop() -> (u32, u32) {
 //
 // C.2) How many cycles per iteration?
 //
-// [Your answer here]
+// ANSWER: 4 
 //
 // What is the speedup (A/C)?
 //
-// [Your answer here]
+// ANSWER: 133x faster
 //
 // ------------------------------------------------------------------------
 // D) Now lets have a closer look at the generated assembly.
 //
-// > cargo objdump --example rtt_timing --release  --features nightly -- --disassemble --no-show-raw-insn > rtt_timing.objdump
+// > crgo objdump --example rtt_timing --release  --features nightly -- --disassemble --no-show-raw-insn > rtt_timing.objdump
 //
 // Open the file in you editor and search for the `timed_loop`.
 //
 // [Assembly for function `timed_loop` here]
+// 08000232 timed_loop:
+//   1  8000232:       movw    r1, #4100
+//   2  8000236:       movw    r2, #10000
+//   3  800023a:       movt    r1, #57344
+//   4  800023e:       ldr     r0, [r1]
+//   5  8000240:       subs    r2, #1
+//   6  8000242:       nop
+//   7  8000244:       bne     #-8 <timed_loop+0xe>
+//   8  8000246:       ldr     r1, [r1]
+//   9  8000248:       bx      lr
 //
 // Locate the loop body, and verify that it makes sense
 // based on the information from the technical documentation:
