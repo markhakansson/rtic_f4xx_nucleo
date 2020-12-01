@@ -5,39 +5,26 @@
 #![no_main]
 #![no_std]
 
+use panic_halt as _;
 use cortex_m::{asm, peripheral::DWT};
-use panic_rtt_target as _;
-use rtt_target::{rprintln, rtt_init_print};
-use stm32f4;
 
 #[rtic::app(device = stm32f4)]
 const APP: () = {
     #[init]
     fn init(mut cx: init::Context) {
-        rtt_init_print!();
-        rprintln!("init");
-
         // Initialize (enable) the monotonic timer (CYCCNT)
-        cx.core.DCB.enable_trace();
         cx.core.DWT.enable_cycle_counter();
 
         unsafe {
             cx.core.DWT.cyccnt.write(0);
         }
 
-        rprintln!("start timed_loop");
         let (start, end) = timed_loop();
-        rprintln!(
-            "start {}, end {}, diff {}",
-            start,
-            end,
-            end.wrapping_sub(start)
-        );
+        let _diff = end.wrapping_sub(start);
     }
 
     #[idle]
     fn idle(_cx: idle::Context) -> ! {
-        rprintln!("idle");
         loop {
             continue;
         }
@@ -346,7 +333,10 @@ fn timed_loop() -> (u32, u32) {
 //
 // > cargo size --example rtt_timing --release --features nightly
 //
-// [Your answer here]
+// ANSWER: Remove all tracing and using panic_halt: 
+// text    data     bss     dec     hex filename
+//  652       0       0     652     28c rtt_timing
+//
 //
 // I was able to get down to:
 // > cargo size --example rtt_timing --release --features nightly
