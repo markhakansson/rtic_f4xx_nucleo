@@ -1,6 +1,6 @@
 //! examples/rtt_timing.rs
 
-#![deny(unsafe_code)]
+//#![deny(unsafe_code)]
 #![deny(warnings)]
 #![no_main]
 #![no_std]
@@ -20,6 +20,10 @@ const APP: () = {
         // Initialize (enable) the monotonic timer (CYCCNT)
         cx.core.DCB.enable_trace();
         cx.core.DWT.enable_cycle_counter();
+
+        unsafe {
+            cx.core.DWT.cyccnt.write(0);
+        }
 
         rprintln!("start timed_loop");
         let (start, end) = timed_loop();
@@ -208,12 +212,29 @@ fn timed_loop() -> (u32, u32) {
 // Confer to the documentation:
 // https://developer.arm.com/documentation/ddi0439/b/Data-Watchpoint-and-Trace-Unit/DWT-Programmers-Model
 //
-// [Your answer here]
+// ANSWER: There is no function call here. It seems it might have been replaced with the contets
+// of register r1 which contains the int 4100. Which might be the initial cycle count.
 //
 // Now check your answer by dumping the registers
 // (gdb) info registers
 //
 // [Register dump here]
+//  r0             0x80000000          -2147483648
+//  r1             0xe0001004          -536866812
+//  r2             0x2710              10000
+//  r3             0xa                 10
+//  r4             0x20000000          536870912
+//  r5             0x20000430          536871984
+//  r6             0x0                 0
+//  r7             0x2000ffe8          536936424
+//  r8             0x0                 0
+//  r9             0x0                 0
+//  r10            0x0                 0
+//  r11            0x0                 0
+//  r12            0x1                 1
+//  sp             0x2000ff98          0x2000ff98
+//  lr             0x8000373           134218611
+//  pc             0x800023e           0x800023e <rtt_timing::timed_loop+12>
 //
 // We can now set a breakpoint exactly at the `nop`.
 //
@@ -238,18 +259,18 @@ fn timed_loop() -> (u32, u32) {
 //
 // (gdb) x 0xe0001004
 //
-// [Your answer here]
+// ANSWER: 0x60bb2f91 -> 1622880145
 //
 // Now, let's execute one iteration:
 // (gdb) continue
 //
 // What is now the current value of the cycle counter?
 //
-// [Your answer here]
+// ANSWER: 0x60bb2f95 -> 1622880149
 //
 // By how much does the cycle counter increase for each iteration?
 //
-// [Your answer here]
+// ANSWER: By 4
 //
 // ------------------------------------------------------------------------
 // F) Reseting the cycle counter
@@ -285,7 +306,7 @@ fn timed_loop() -> (u32, u32) {
 // What is the initial value of the cycle counter
 // (when hitting the `timed_loop` breakpoint)?
 //
-// [Your answer here]
+// ANSWER: 0x00000185 -> 389
 //
 // ------------------------------------------------------------------------
 // F) Finally some statics
