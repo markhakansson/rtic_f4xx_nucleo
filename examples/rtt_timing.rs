@@ -63,15 +63,15 @@ fn timed_loop() -> (u32, u32) {
 // A.1) What is the cycle count for the loop?
 // > cargo run --example rtt_timing
 //
-// [Your answer here]
+// ANSWER: diff 4830149 
 //
 // A.2) How many cycles per iteration?
 //
-// [Your answer here]
+// ANSWER: 483
 //
 // A.3) Why do we need a wrapping subtraction?
 //
-// [Your answer here]
+// ANSWER: So it does not underflow and instead wraps back to its upper bound 
 //
 // ------------------------------------------------------------------------
 // Now try a release (optimized build, see `Cargo.toml` for build options).
@@ -82,15 +82,16 @@ fn timed_loop() -> (u32, u32) {
 //
 // B.2) How many cycles per iteration?
 //
-// [Your answer here]
+// ANSWER: 7 
 //
 // What is the speedup (A/B)?
 //
-// [Your answer here]
+// ANSWER: 69x faster 
 //
 // Why do you think it differs that much?
 //
-// [Your answer here]
+// ANSWER: The compiler does a lot more optimization in a release. Exactly
+// what and where it does it, I couldn't guess.
 //
 // ------------------------------------------------------------------------
 // In the loop there is just a single assembly instruction (nop).

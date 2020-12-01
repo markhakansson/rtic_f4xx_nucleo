@@ -21,10 +21,10 @@ const APP: () = {
     #[idle]
     fn idle(_cx: idle::Context) -> ! {
         rprintln!("idle");
-        // panic!("panic");
-        loop {
-            continue;
-        }
+        panic!("panic");
+        //loop {
+        //    continue;
+        //}
     }
 };
 
@@ -62,8 +62,12 @@ const APP: () = {
 // > cargo run
 //
 // What is the output?
+// Answer:
+// Without loop code commented:
+// error: unreachable expression (unreachable loop)
+// When loop code is commened out:
+// panicked at 'panic', src/main.rs:24:9
 //
-// [Your answer here]
 //
 // D) Panic halt
 // Tracing is nice during development, but requires a debugger attached
@@ -76,7 +80,7 @@ const APP: () = {
 //
 // What is the output?
 //
-// [Your answer here]
+// 
 //
 // Now press Ctrl-C
 //
@@ -91,4 +95,10 @@ const APP: () = {
 // - `crates.io`
 //
 // Paste the implementation here
-// [Your answer here]
+// #[inline(never)]
+// #[panic_handler]
+// fn panic(_info: &PanicInfo) -> ! {
+//    loop {
+//        atomic::compiler_fence(Ordering::SeqCst);
+//    }
+// }
