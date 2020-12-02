@@ -81,11 +81,15 @@ const APP: () = {
 //
 // (gdb) x 0xe0001004
 //
-// [Your answer here]
+// ANSWER: 0x0000000b -> 0d11 
 //
 // (gdb) disassemble
 //
-// [Your answer here]
+// ANSWER:
+// => 0x08000232 <+0>:     bkpt    0x0000
+//    0x08000234 <+2>:     movs    r0, #0
+//    0x08000236 <+4>:     msr     BASEPRI, r0
+//    0x0800023a <+8>:     bx      lr
 //
 // You should see that we hit the breakpoint in `exti0`, and
 // that the code complies to the objdump EXTI disassembly.
@@ -95,11 +99,11 @@ const APP: () = {
 //
 // What was the software latency observed to enter the task?
 //
-// [Your answer here]
+// ANSWER: 11 clock cycles (0x0 -> 0xb).
 //
 // Does RTIC infer any overhead for launching the task?
 //
-// [Your answer here]
+// ANSWER: No because according to the URL above the M4 interrupt latency is typically 12 cycles. 
 //
 // Now we can continue to measure the round trip time.
 //
@@ -109,7 +113,7 @@ const APP: () = {
 //
 // (gdb) x 0xe0001004
 //
-// [Your answer here]
+// ANSWER: 0x00000017 -> 23 
 //
 // Looking at the EXTI0 (exti0) code, we see two additional
 // instructions used to restore the BASEPRI register.
