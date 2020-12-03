@@ -173,11 +173,11 @@ const APP: () = {
 //
 // (gdb) x 0xe0001004
 //
-// ANSWER: 0x00000028 -> 40 
+// ANSWER: 0x00000025 -> 37 
 //
 // Calculate the total time (in cycles), for this section of code.
 //
-// ANSWER: 0x00000032 -> 50 
+// ANSWER: 0x00000034 SUB 0x00000025 -> 52 - 37 = 15
 //
 // You should get a value around 15 cycles.
 //
