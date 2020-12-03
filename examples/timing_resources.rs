@@ -40,9 +40,9 @@ const APP: () = {
         rtic::pend(stm32f411::Interrupt::EXTI0);
         asm::bkpt();
         cx.resources.shared.lock(|shared| {
-            // asm::bkpt();
+            asm::bkpt();
             *shared += 1;
-            // asm::bkpt();
+            asm::bkpt();
         });
         asm::bkpt();
     }
@@ -71,7 +71,11 @@ const APP: () = {
 //
 // Explain what is happening here in your own words.
 //
-// [Your code here]
+// ANSWER: After the breakpoint it looks like it loads the value at #8192 into the top of r1, r2 
+// and r3. Which I think is the Carry condition flag. Then increment r2 (just like in the code). 
+// Then it does addition with carry on r3 with 0. And then it looks like it finally stores the
+// value r2.
+//
 //
 // > cargo run --example timing_resources --release --features nightly
 // Then continue to the first breakpoint instruction:
@@ -90,22 +94,32 @@ const APP: () = {
 //
 // (gdb) x 0xe0001004
 //
-// [Your answer here]
+// ANSWER: 0x00000010 -> 16 
 //
 // (gdb) disassemble
 //
-// [Your answer here]
+// ANSWER: 
+//   0x08000232 <+0>:     movw    r1, #0
+//   0x08000236 <+4>:     mrs     r0, BASEPRI
+//=> 0x0800023a <+8>:     bkpt    0x0000
+//   0x0800023c <+10>:    movt    r1, #8192       ; 0x2000
+//   0x08000240 <+14>:    ldrd    r2, r3, [r1]
+//   0x08000244 <+18>:    adds    r2, #1
+//   0x08000246 <+20>:    adc.w   r3, r3, #0
+//   0x0800024a <+24>:    strd    r2, r3, [r1]
+//   0x0800024e <+28>:    msr     BASEPRI, r0
+//   0x08000252 <+32>:    bx      lr
 //
 // You should see that we hit the breakpoint in `exti0`, and
 // that the code complies to the objdump EXTI disassembly.
 //
 // What was the software latency observed to enter the task?
 //
-// [Your answer here]
+// ANSWER: 0x10 SUB 0x2 => 14 cycles
 //
 // Does RTIC infer any overhead?
 //
-// [Your answer here]
+// ANSWER: Yes, a few cycles as the typical interrupt latency should be 12 cycles. 
 //
 // The debugger reports that the breakpoint was hit in the `run<closure>`.
 // The reason is that the RTIC implements the actual interrupt handler,
@@ -123,14 +137,14 @@ const APP: () = {
 //
 // (gdb) x 0xe0001004
 //
-// [Your answer here]
+// ANSWER: 0x00000025 -> 37 
 //
 // You should have a total execution time in the range of 30-40 cycles.
 //
 // Explain the reason (for this case) that resource access in
 // `exti0` was safe without locking the resource.
 //
-// [Your answer here]
+// ANSWER: Because it has the highest priority of the tasks.
 //
 // In `exti1` we also access `shared` but this time through a lock.
 //
@@ -159,11 +173,11 @@ const APP: () = {
 //
 // (gdb) x 0xe0001004
 //
-// [Your answer here]
+// ANSWER: 0x00000028 -> 40 
 //
 // Calculate the total time (in cycles), for this section of code.
 //
-// [Your answer here]
+// ANSWER: 0x00000032 -> 50 
 //
 // You should get a value around 15 cycles.
 //
@@ -203,7 +217,7 @@ const APP: () = {
 //
 // (gdb) x 0xe0001004
 //
-// [Your answer here]
+// ANSWER: 0x00000028 -> 40
 //
 // (gdb) c
 //
@@ -213,14 +227,14 @@ const APP: () = {
 //
 // (gdb) x 0xe0001004
 //
-// [Your answer here]
+// ANSWER: 0x00000032 -> 50 
 //
 // From a real-time perspective the critical section infers
 // blocking (of higher priority tasks).
 //
 // How many clock cycles is the blocking?
 //
-// [Your answer here]
+// ANSWER: 10 
 //
 // Finally continue out of the closure.
 //
@@ -230,7 +244,7 @@ const APP: () = {
 //
 // (gdb) x 0xe0001004
 //
-// [Your answer here]
+// ANSWER: 0x00000034 -> 52
 //
 // This is the total execution time of:
 //
@@ -253,7 +267,12 @@ const APP: () = {
 //
 // Motivate your answer (not just a number).
 //
-// [Your answer here]
+// ANSWER: From the table: 
+//  Job latency + OH = 650 + 1522 (for the task)
+//  Lock/Unlock OH = 260 + 170 (for the lock)
+//  Critical Section OH = 40 (for the critical section inside the lock)
+//  Memory Job = 468 (I guess for the resource) 
+//  Total: 3110 cycles
 //
 // Notice, the Rust implementation is significantly faster than the C code version
 // of Real-Time For the Masses back in 2013.
@@ -263,4 +282,5 @@ const APP: () = {
 //
 // (Hint, what possible optimization can safely be applied by RTIC + Rust + LLVM.)
 //
-// [Your answer here]
+// ANSWER: No memory management required, no extra precautions needed to check for deadlocks
+// as this is done in compile-time.
