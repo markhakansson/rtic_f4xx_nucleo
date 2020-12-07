@@ -79,14 +79,30 @@ const APP: () = {
 // > cargo run
 //
 // What is the output?
-//
+// ANSWER:
+// init
+// idle
 // 
 //
 // Now press Ctrl-C
 //
 // What is the output?
-//
-// [Your answer here]
+// ANSWER:
+// stack backtrace:
+//   0: core::sync::atomic::compiler_fence
+//        at /rustc/8e21bd0633b8d970646ee6eb706c9e8acfad19af/library/core/src/sync/atomic.rs:2764
+//   1: rust_begin_unwind
+//        at /home/mark/.cargo/registry/src/github.com-1ecc6299db9ec823/panic-halt-0.2.0/src/lib.rs:33
+//   2: core::panicking::panic_fmt
+//        at /rustc/8e21bd0633b8d970646ee6eb706c9e8acfad19af/library/core/src/panicking.rs:85
+//   3: core::panicking::panic
+//        at /rustc/8e21bd0633b8d970646ee6eb706c9e8acfad19af/library/core/src/panicking.rs:50
+//   4: app::idle
+//        at src/main.rs:24
+//   5: main
+//        at src/main.rs:13
+//   6: Reset
+//        at /home/mark/.cargo/registry/src/github.com-1ecc6299db9ec823/cortex-m-rt-0.6.13/src/lib.rs:526
 //
 // E) Find the source
 // Figure out how to find the source of `panic_halt`, and look at the implementation.
@@ -95,6 +111,7 @@ const APP: () = {
 // - `crates.io`
 //
 // Paste the implementation here
+// ANSWER:
 // #[inline(never)]
 // #[panic_handler]
 // fn panic(_info: &PanicInfo) -> ! {
