@@ -81,7 +81,7 @@ const APP: () = {
 //
 // (gdb) x 0xe0001004
 //
-// ANSWER: 0x0000000b -> 0d11 
+// ANSWER: 0x0000000b -> 11 
 //
 // (gdb) disassemble
 //
