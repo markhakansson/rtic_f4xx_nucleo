@@ -81,8 +81,8 @@ fn timed_loop() -> (u32, u32) {
 //
 // Why do you think it differs that much?
 //
-// ANSWER: The compiler does a lot more optimization in a release. Exactly
-// what and where it does it, I couldn't guess.
+// ANSWER: The compiler does a lot more optimization in a release. Most likely
+// removing unnecessary instructions and debug stuff.
 //
 // ------------------------------------------------------------------------
 // In the loop there is just a single assembly instruction (nop).

@@ -145,6 +145,8 @@ const APP: () = {
 // `exti0` was safe without locking the resource.
 //
 // ANSWER: Because it has the highest priority of the tasks.
+// And thus will not need to lock it because lower priority tasks
+// will not be able to access it once exti0 has access to it.
 //
 // In `exti1` we also access `shared` but this time through a lock.
 //
@@ -268,11 +270,15 @@ const APP: () = {
 // Motivate your answer (not just a number).
 //
 // ANSWER: From the table: 
-//  Job latency + OH = 650 + 1522 (for the task)
-//  Lock/Unlock OH = 260 + 170 (for the lock)
+//  Job latency + OH = 650 + 1522 (for the first task)
+//  Job latency + OH = 650 + 1522 (for the second task)
+//  Lock/Unlock OH = 260 + 170 (for the lock of the resource in the first task)
+//  Lock/Unlock OH = 260 + 170 (for the lock of the resource in the second task)
 //  Critical Section OH = 40 (for the critical section inside the lock)
-//  Memory Job = 468 (I guess for the resource) 
-//  Total: 3110 cycles
+//  Memory Job = 468 (for the first access of the resource) 
+//  Memory Job = 468 (for the second access of the resource) 
+//  Footprint = 8184
+//  Total: 14364 cycles
 //
 // Notice, the Rust implementation is significantly faster than the C code version
 // of Real-Time For the Masses back in 2013.
