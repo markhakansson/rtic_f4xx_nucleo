@@ -43,13 +43,23 @@ const APP: () = {
         asm::bkpt();
         cx.schedule.t1(cx.scheduled + 100_000.cycles()).unwrap();
         asm::bkpt();
-
+        
+        let start = DWT::get_cycle_count();
         // emulates timing behavior of t1
         cortex_m::asm::delay(10_000);
-        asm::bkpt();
+        let end = DWT::get_cycle_count();
+        let diff = end.wrapping_sub(start);
 
         // 2) your code here to update T1_MAX_RP and
         // break if deadline missed
+        unsafe {
+            if diff > T1_MAX_RP {
+                T1_MAX_RP = diff;
+            }
+            if T1_MAX_RP > 100000 {
+                panic!("T1 deadline missed");
+            }
+        }
     }
 
     // Deadline 200, Inter-arrival 200
@@ -61,27 +71,32 @@ const APP: () = {
         asm::bkpt();
 
         // 1) your code here to emulate timing behavior of t2
+        let start = DWT::get_cycle_count();
         cortex_m::asm::delay(10_000); // 0-10
-        asm::bkpt();
 
         // Here R1 is "locked"
         cortex_m::asm::delay(2_000); // 10-12
-        asm::bkpt();
         cx.resources.R2.lock(|R2| {
             cortex_m::asm::delay(4_000); // 12-16
-            asm::bkpt();
         });
         cortex_m::asm::delay(4_000); // 16-20
-        asm::bkpt();
         
         cortex_m::asm::delay(2_000); // 20-22
-        asm::bkpt();
         // Here R1 is "locked" 
         cortex_m::asm::delay(6_000); // 22-28
-        asm::bkpt();
+        let end = DWT::get_cycle_count();
+        let diff = end.wrapping_sub(start);
 
         // 2) your code here to update T2_MAX_RP and
         // break if deadline missed
+        unsafe {
+            if diff > T2_MAX_RP {
+                T2_MAX_RP = diff;
+            }
+            if T2_MAX_RP > 200000 {
+                panic!("T2 deadline missed");
+            }
+        }
     }
 
     // Deadline 50, Inter-arrival 50
@@ -93,18 +108,24 @@ const APP: () = {
         asm::bkpt();
 
         // 1) your code here to emulate timing behavior of t3
+        let start = DWT::get_cycle_count();
         cortex_m::asm::delay(10_000); // 0-10
-        asm::bkpt();
-        
         // Here R2 is "locked"
         cortex_m::asm::delay(10_000); // 10-20
-        asm::bkpt();
-
         cortex_m::asm::delay(10_000); // 20-30
-        asm::bkpt();
+        let end = DWT::get_cycle_count();
+        let diff = end.wrapping_sub(start);
 
         // 2) your code here to update T3_MAX_RP and
         // break if deadline missed
+        unsafe {
+            if diff > T3_MAX_RP {
+                T3_MAX_RP = diff;
+            }
+            if T3_MAX_RP > 50000 {
+                panic!("T1 deadline missed");
+            }
+        }
     }
 
     // RTIC requires that unused interrupts are declared in an extern block when
@@ -147,6 +168,8 @@ const APP: () = {
 // `cx.schedule.t1(cx.scheduled + 100_000.cycles()).unwrap();`
 //
 // [Your answer here]
+// It schedules itself again from it's current scheduled time + another 100k cycles.
+// Then it will become a periodic task.
 //
 // Explain in your own words the difference between:
 //
@@ -155,11 +178,15 @@ const APP: () = {
 // `cx.schedule.t1(cx.scheduled + 100_000.cycles()).unwrap();`
 //
 // [Your answer here]
+// The first one schedules t1 from the current clock + 100k cycles whereas
+// the second one schedules t1 100k cycles relative to the previous scheduled time.
 //
 // Explain in your own words why we use the latter
 // in order to generate a periodic task.
 //
 // [Your answer here]
+// Because then it will be periodic. Using the first method it will not be
+// scheduled exactly at 100k intervals.
 //
 // Hint, look at https://rtic.rs/0.5/book/en/by-example/timer-queue.html
 //
@@ -180,6 +207,8 @@ const APP: () = {
 // Explain why this is needed (there is a good reason for it).
 //
 // [Your answer here]
+// It is difficult for the compiler to guarantee that a static mut item
+// is handled correctly, due to it pointing to a specific memory address.
 //
 // Implement this functionality for all tasks.
 //
