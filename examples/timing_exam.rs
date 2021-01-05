@@ -55,12 +55,29 @@ const APP: () = {
     // Deadline 200, Inter-arrival 200
     #[inline(never)]
     #[task(schedule = [t2], resources = [R1, R2], priority = 2)]
-    fn t2(cx: t2::Context) {
+    fn t2(mut cx: t2::Context) {
         asm::bkpt();
         cx.schedule.t2(cx.scheduled + 200_000.cycles()).unwrap();
         asm::bkpt();
 
         // 1) your code here to emulate timing behavior of t2
+        cortex_m::asm::delay(10_000); // 0-10
+        asm::bkpt();
+
+        // Here R1 is "locked"
+        cortex_m::asm::delay(2_000); // 10-12
+        asm::bkpt();
+        cx.resources.R2.lock(|R2| {
+            cortex_m::asm::delay(4_000); // 12-16
+            asm::bkpt();
+        });
+        cortex_m::asm::delay(4_000); // 16-20
+        asm::bkpt();
+        
+        cortex_m::asm::delay(2_000); // 20-22
+        asm::bkpt();
+        // Here R1 is "locked" 
+        cortex_m::asm::delay(6_000); // 22-28
         asm::bkpt();
 
         // 2) your code here to update T2_MAX_RP and
@@ -76,6 +93,14 @@ const APP: () = {
         asm::bkpt();
 
         // 1) your code here to emulate timing behavior of t3
+        cortex_m::asm::delay(10_000); // 0-10
+        asm::bkpt();
+        
+        // Here R2 is "locked"
+        cortex_m::asm::delay(10_000); // 10-20
+        asm::bkpt();
+
+        cortex_m::asm::delay(10_000); // 20-30
         asm::bkpt();
 
         // 2) your code here to update T3_MAX_RP and
