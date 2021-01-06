@@ -40,15 +40,16 @@ const APP: () = {
     #[inline(never)]
     #[task(schedule = [t1], priority = 1)]
     fn t1(cx: t1::Context) {
+        let start = DWT::get_cycle_count();
+
         asm::bkpt();
         cx.schedule.t1(cx.scheduled + 100_000.cycles()).unwrap();
-        asm::bkpt();
+        //asm::bkpt();
         
-        let start = DWT::get_cycle_count();
         // emulates timing behavior of t1
         cortex_m::asm::delay(10_000);
         let end = DWT::get_cycle_count();
-        let diff = end.wrapping_sub(start);
+        let diff = end - start;
 
         // 2) your code here to update T1_MAX_RP and
         // break if deadline missed
@@ -57,7 +58,8 @@ const APP: () = {
                 T1_MAX_RP = diff;
             }
             if T1_MAX_RP > 100000 {
-                panic!("T1 deadline missed");
+                // panic!("T1 deadline missed");
+                asm::bkpt();
             }
         }
     }
@@ -66,12 +68,13 @@ const APP: () = {
     #[inline(never)]
     #[task(schedule = [t2], resources = [R1, R2], priority = 2)]
     fn t2(mut cx: t2::Context) {
+        let start = DWT::get_cycle_count();
+
         asm::bkpt();
         cx.schedule.t2(cx.scheduled + 200_000.cycles()).unwrap();
-        asm::bkpt();
+        //asm::bkpt();
 
         // 1) your code here to emulate timing behavior of t2
-        let start = DWT::get_cycle_count();
         cortex_m::asm::delay(10_000); // 0-10
 
         // Here R1 is "locked"
@@ -85,7 +88,7 @@ const APP: () = {
         // Here R1 is "locked" 
         cortex_m::asm::delay(6_000); // 22-28
         let end = DWT::get_cycle_count();
-        let diff = end.wrapping_sub(start);
+        let diff = end - start;
 
         // 2) your code here to update T2_MAX_RP and
         // break if deadline missed
@@ -94,7 +97,8 @@ const APP: () = {
                 T2_MAX_RP = diff;
             }
             if T2_MAX_RP > 200000 {
-                panic!("T2 deadline missed");
+                // panic!("T2 deadline missed");
+                asm::bkpt();
             }
         }
     }
@@ -103,18 +107,19 @@ const APP: () = {
     #[inline(never)]
     #[task(schedule = [t3], resources = [R2], priority = 3)]
     fn t3(cx: t3::Context) {
+        let start = DWT::get_cycle_count();
+
         asm::bkpt();
         cx.schedule.t3(cx.scheduled + 50_000.cycles()).unwrap();
-        asm::bkpt();
+        //asm::bkpt();
 
         // 1) your code here to emulate timing behavior of t3
-        let start = DWT::get_cycle_count();
         cortex_m::asm::delay(10_000); // 0-10
         // Here R2 is "locked"
         cortex_m::asm::delay(10_000); // 10-20
         cortex_m::asm::delay(10_000); // 20-30
         let end = DWT::get_cycle_count();
-        let diff = end.wrapping_sub(start);
+        let diff = end - start;
 
         // 2) your code here to update T3_MAX_RP and
         // break if deadline missed
@@ -123,7 +128,8 @@ const APP: () = {
                 T3_MAX_RP = diff;
             }
             if T3_MAX_RP > 50000 {
-                panic!("T1 deadline missed");
+                //panic!("T1 deadline missed");
+                asm::bkpt();
             }
         }
     }
@@ -251,16 +257,24 @@ const APP: () = {
 //
 // 3A) Why is there an offset 50240 (instead of 50000)?
 //
-// [Your answer here]
+// [Your answer here
+// The first 240 (242 in my case) cycles might be some overhead when
+// initializing the context or creating the schedule. Just a guess.
 //
 // 3B) Why is the calculated response time larger than the
 // delays you inserted to simulate workload?
 //
 // [Your answer here]
+// The additional overhead such as scheduling the tasks again,
+// checking the MAX_RPs and reading the CYCCNT will add more cycles to the counter.
 //
 // 3C) Why is the second arrival of `t3` further delayed?
 //
 // [Your answer here]
+// T1 is supposed to be scheduled at 100_000 cycles. But then T3 wants to start
+// and most likely some checks happens such that T3 gets to start first and T1
+// have to wait. This should require some more steps to do.
+//
 // Hint, think about what happens at time 100_000, what tasks
 // are set to `arrive` at that point compared to time 50_000.
 //
@@ -268,16 +282,19 @@ const APP: () = {
 // measured time according to CYCYCNT).
 //
 // [Your answer here]
+// 100000 
 //
 // Why is the measured value much higher than the scheduled time?
 //
 // [Your answer here]
+// It was blocked by T3 and will wait until it finished (after 30k cycles)
 //
 // Now you can continue until you get a first update of `T1_MAX_RP`.
 //
 // What is the first update of `T1_MAX_RP`?
 //
 // [Your answer here]
+// 10105
 //
 // Explain the obtained value in terms of:
 // Execution time, blocking and preemptions
@@ -290,24 +307,31 @@ const APP: () = {
 // What is the first update of `T2_MAX_RP`?
 //
 // [Your answer here]
+// 58580
 //
 // Now continue until you get a second timing measurement for `T1_MAX_RP`.
 //
 // What is the second update of `T3_MAX_RP`?
 //
 // [Your answer here]
+// I did not get a second update of it.
 //
 // Now you should have ended up in a deadline miss right!!!!
 //
 // Why did this happen?
 //
 // [Your answer here]
+// I did not get a deadline miss but I guess it is because longer delays makes
+// it easier for tasks to get delayed and response times to increase. I put the delays
+// in the order of the task set in srp_analysis and I did not get any problems.
 //
 // Compare that to the result obtained from your analysis tool.
 //
 // Do they differ, if so why?
 //
 // [Your answer here]
+// I got lower response times for T1 and T2 compared to the analysis. Whereas T3 were 
+// about the same.
 //
 // Commit your repository once you completed this part.
 //
