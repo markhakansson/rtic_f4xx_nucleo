@@ -368,9 +368,10 @@ const APP: () = {
 //
 // [Your ideas and reflections here]
 // - I like that RTIC contributes to very little overhead
-// - The theoretical model was more conservative compared to the
-//   measurements I found. The measurements were much better compared
-//   to the theoretical RT.
+// - When measuring you will find that the theoretical models
+//   does not really take into account any small amount overhead from the
+//   framework itself. Even though it is barely noticeable (OH), it does 
+//   contribute to make the system unstable if you forget about it.
 // - Something more simple to use. It would be a cool feature
 //   if such a tool could inject the necessary code to analyze the RT
 //   during compilation, instead of making the developer bloat the code
