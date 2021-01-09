@@ -40,25 +40,23 @@ const APP: () = {
     #[inline(never)]
     #[task(schedule = [t1], priority = 1)]
     fn t1(cx: t1::Context) {
-        let start = DWT::get_cycle_count();
-
         asm::bkpt();
         cx.schedule.t1(cx.scheduled + 100_000.cycles()).unwrap();
-        //asm::bkpt();
         
         // emulates timing behavior of t1
         cortex_m::asm::delay(10_000);
-        let end = DWT::get_cycle_count();
-        let diff = end - start;
-
+        // Get the time it took from when the task was scheduled to run
+        // to when it finished running.
+        let diff = cx.scheduled.elapsed().as_cycles();
+    
         // 2) your code here to update T1_MAX_RP and
         // break if deadline missed
         unsafe {
             if diff > T1_MAX_RP {
                 T1_MAX_RP = diff;
+                asm::bkpt();
             }
             if T1_MAX_RP > 100000 {
-                // panic!("T1 deadline missed");
                 asm::bkpt();
             }
         }
@@ -68,36 +66,36 @@ const APP: () = {
     #[inline(never)]
     #[task(schedule = [t2], resources = [R1, R2], priority = 2)]
     fn t2(mut cx: t2::Context) {
-        let start = DWT::get_cycle_count();
-
         asm::bkpt();
         cx.schedule.t2(cx.scheduled + 200_000.cycles()).unwrap();
-        //asm::bkpt();
 
         // 1) your code here to emulate timing behavior of t2
         cortex_m::asm::delay(10_000); // 0-10
 
         // Here R1 is "locked"
         cortex_m::asm::delay(2_000); // 10-12
-        cx.resources.R2.lock(|R2| {
+        cx.resources.R2.lock(|_R2| {
             cortex_m::asm::delay(4_000); // 12-16
         });
         cortex_m::asm::delay(4_000); // 16-20
-        
+         
         cortex_m::asm::delay(2_000); // 20-22
         // Here R1 is "locked" 
         cortex_m::asm::delay(6_000); // 22-28
-        let end = DWT::get_cycle_count();
-        let diff = end - start;
+        cortex_m::asm::delay(2_000); // 28-30
+
+        // Get the time it took from when the task was scheduled to run
+        // to when it finished running.
+        let diff = cx.scheduled.elapsed().as_cycles();
 
         // 2) your code here to update T2_MAX_RP and
         // break if deadline missed
         unsafe {
             if diff > T2_MAX_RP {
                 T2_MAX_RP = diff;
+                asm::bkpt();
             }
             if T2_MAX_RP > 200000 {
-                // panic!("T2 deadline missed");
                 asm::bkpt();
             }
         }
@@ -107,25 +105,25 @@ const APP: () = {
     #[inline(never)]
     #[task(schedule = [t3], resources = [R2], priority = 3)]
     fn t3(cx: t3::Context) {
-        let start = DWT::get_cycle_count();
-
         asm::bkpt();
         cx.schedule.t3(cx.scheduled + 50_000.cycles()).unwrap();
-        //asm::bkpt();
 
         // 1) your code here to emulate timing behavior of t3
         cortex_m::asm::delay(10_000); // 0-10
         // Here R2 is "locked"
         cortex_m::asm::delay(10_000); // 10-20
         cortex_m::asm::delay(10_000); // 20-30
-        let end = DWT::get_cycle_count();
-        let diff = end - start;
+
+        // Get the time it took from when the task was scheduled to run
+        // to when it finished running.
+        let diff = cx.scheduled.elapsed().as_cycles();
 
         // 2) your code here to update T3_MAX_RP and
         // break if deadline missed
         unsafe {
             if diff > T3_MAX_RP {
                 T3_MAX_RP = diff;
+                asm::bkpt();
             }
             if T3_MAX_RP > 50000 {
                 //panic!("T1 deadline missed");
@@ -294,44 +292,44 @@ const APP: () = {
 // What is the first update of `T1_MAX_RP`?
 //
 // [Your answer here]
-// 10105
+// 40725
 //
 // Explain the obtained value in terms of:
 // Execution time, blocking and preemptions
 // (that occurred for this task instance).
 //
 // [Your answer here]
+// 10_000 WCET of T1 then preemption of T3 by another 30_0000
 //
 // Now continue until you get a first timing measurement for `T2_MAX_RP`.
 //
 // What is the first update of `T2_MAX_RP`?
 //
 // [Your answer here]
-// 58580
+// 91242
 //
 // Now continue until you get a second timing measurement for `T1_MAX_RP`.
 //
-// What is the second update of `T3_MAX_RP`?
+// What is the second update of `T1_MAX_RP`?
 //
 // [Your answer here]
-// I did not get a second update of it.
+// 131 990
 //
 // Now you should have ended up in a deadline miss right!!!!
 //
 // Why did this happen?
 //
 // [Your answer here]
-// I did not get a deadline miss but I guess it is because longer delays makes
-// it easier for tasks to get delayed and response times to increase. I put the delays
-// in the order of the task set in srp_analysis and I did not get any problems.
+// T1 is supposed to be scheduled at cycle 200_000 but it starts at 290_000.
+// Then it will be preempted by T3 and T1 will continue at 320_000 and finish at
+// 330_000. Thus its RT is around 130_000 cycles. 
 //
 // Compare that to the result obtained from your analysis tool.
 //
 // Do they differ, if so why?
 //
 // [Your answer here]
-// I got lower response times for T1 and T2 compared to the analysis. Whereas T3 were 
-// about the same.
+// Yes the analysis tool calculated it to be 100_000 cycles. 
 //
 // Commit your repository once you completed this part.
 //
@@ -371,5 +369,13 @@ const APP: () = {
 // - How would an ideal tool for static analysis of RTIC models look like.
 //
 // [Your ideas and reflections here]
+// - I like that RTIC contributes to very little overhead
+// - The theoretical model was more conservative compared to the
+//   measurements I found. The measurements were much better compared
+//   to the theoretical RT.
+// - Something more simple to use. It would be a cool feature
+//   if such a tool could inject the necessary code to analyze the RT
+//   during compilation, instead of making the developer bloat the code
+//   with those instructions. Then it could be automatically used.
 //
 // Commit your thoughts, we will discuss further when we meet.
