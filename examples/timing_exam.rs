@@ -40,11 +40,10 @@ const APP: () = {
     #[inline(never)]
     #[task(schedule = [t1], priority = 1)]
     fn t1(cx: t1::Context) {
-        asm::bkpt();
         cx.schedule.t1(cx.scheduled + 100_000.cycles()).unwrap();
         
         // emulates timing behavior of t1
-        cortex_m::asm::delay(10_000);
+        cortex_m::asm::delay(9_500);
         // Get the time it took from when the task was scheduled to run
         // to when it finished running.
         let diff = cx.scheduled.elapsed().as_cycles();
@@ -66,11 +65,10 @@ const APP: () = {
     #[inline(never)]
     #[task(schedule = [t2], resources = [R1, R2], priority = 2)]
     fn t2(mut cx: t2::Context) {
-        asm::bkpt();
         cx.schedule.t2(cx.scheduled + 200_000.cycles()).unwrap();
 
         // 1) your code here to emulate timing behavior of t2
-        cortex_m::asm::delay(10_000); // 0-10
+        cortex_m::asm::delay(9_500); // 0-10
 
         // Here R1 is "locked"
         cortex_m::asm::delay(2_000); // 10-12
@@ -105,11 +103,10 @@ const APP: () = {
     #[inline(never)]
     #[task(schedule = [t3], resources = [R2], priority = 3)]
     fn t3(cx: t3::Context) {
-        asm::bkpt();
         cx.schedule.t3(cx.scheduled + 50_000.cycles()).unwrap();
 
         // 1) your code here to emulate timing behavior of t3
-        cortex_m::asm::delay(10_000); // 0-10
+        cortex_m::asm::delay(9_500); // 0-10
         // Here R2 is "locked"
         cortex_m::asm::delay(10_000); // 10-20
         cortex_m::asm::delay(10_000); // 20-30
@@ -330,6 +327,7 @@ const APP: () = {
 //
 // [Your answer here]
 // Yes the analysis tool calculated it to be 100_000 cycles. 
+// The tool can not take additional OH from RTIC into consideration.
 //
 // Commit your repository once you completed this part.
 //
