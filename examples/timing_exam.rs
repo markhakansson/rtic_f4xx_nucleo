@@ -187,7 +187,10 @@ const APP: () = {
 //
 // [Your answer here]
 // Because then it will be periodic. Using the first method it will not be
-// scheduled exactly at 100k intervals.
+// scheduled exactly at 100k intervals. This is due to jitter from tasks and
+// overhead that has happened from the previously scheduled time until the
+// Instant::now() is called. Whereas using the latter it will be scheduled
+// exactly at each 100k cycles.
 //
 // Hint, look at https://rtic.rs/0.5/book/en/by-example/timer-queue.html
 //
@@ -208,8 +211,12 @@ const APP: () = {
 // Explain why this is needed (there is a good reason for it).
 //
 // [Your answer here]
-// It is difficult for the compiler to guarantee that a static mut item
-// is handled correctly, due to it pointing to a specific memory address.
+// A static variable will outlive all other lifetimes, is located at a specific memory
+// address, and does not call drop at the program termination. If this variable is not
+// mutable it will be safe for use, as it can only read by the program.
+// But if this variable is also mutable it means the program can also modify it. 
+// Then it is impossible for the compiler to ensure that it is safe to use using the regular
+// memory safety guarantees. And will need to be explicitly used in an unsafe block.
 //
 // Implement this functionality for all tasks.
 //
